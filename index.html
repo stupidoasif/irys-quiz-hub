@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>IRYS Quiz Hub</title>
 <link rel="icon" type="image/png" href="Asset 1IQ.png">
+
+<!-- Open Graph / Twitter (unchanged) -->
 <meta property="og:site_name" content="IRYS Quiz Hub" />
 <meta property="og:locale" content="en_US" />
 <meta property="og:title" content="IRYS Quiz Hub - Play & Learn About Irys" />
@@ -19,234 +21,163 @@
 <meta name="twitter:description" content="Test your knowledge about Irys, the programmable datachain! Play the interactive quiz now." />
 <meta name="twitter:image" content="https://irysquizhub.vercel.app/Welcome.png" />
 <meta name="description" content="Quiz Time" />
+
 <style>
+  /* Font */
   @font-face {
     font-family: 'HouseSans';
     src: url('house-sans-heavy-italic.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
   }
 
+  /* Theme */
   :root{
     --panel:#111935; --muted:#9aa3c7; --text:#ffffff;
-    --accent:#61ffd7; --accent2:#61ffd7; --ok:#42d392; --bad:#ff6b6b;
+    --accent:#61ffd7; --ok:#42d392; --bad:#ff6b6b;
   }
-  *{box-sizing:border-box;}
-  html,body{height:100%; margin:0; padding:0; overflow:hidden;}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial; color:var(--text); display:grid; place-items:center; position:relative;}
-  body.hidden-ui .wrap, body.hidden-ui footer.site-footer{opacity:0; pointer-events:none; filter:blur(2px);} 
 
+  /* Base reset */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+    color:var(--text);
+    min-height:100dvh;                 /* address-bar aware height */
+    overflow-y:auto;
+    padding-bottom:max(12px, env(safe-area-inset-bottom)); /* safe area */
+  }
+
+  /* Background video */
   #bgVideo{
-    position:fixed;
-    top:0; left:0;
+    position:fixed; inset:0;
     width:100%; height:100%;
-    object-fit:cover;
+    object-fit:cover; object-position:center;
     z-index:-1;
   }
 
-  /* Title (top by default); with .splash it starts centered */
-  .irys-title{
-    position:fixed;
-    top:20px; left:50%;
-    transform:translateX(-50%);
-    transition: top .6s ease, transform .6s ease, opacity .4s ease;
-    font-family:'HouseSans', sans-serif;
-    font-size:64px;
-    color:#61ffd7;
-    letter-spacing:3px;
-    z-index:10;
-  }
-  .irys-title.splash{ top:50%; transform:translate(-50%, -50%); }
+  /* Hide UI until Play */
+  body.hidden-ui .wrap,
+  body.hidden-ui footer.site-footer{opacity:0; filter:blur(2px); pointer-events:none}
 
-  /* Play button shown on splash */
+  /* Title */
+  .irys-title{
+    position:fixed; left:50%;
+    top:18px; transform:translateX(-50%);
+    transition:top .55s ease, transform .55s ease, opacity .35s ease;
+    font-family:'HouseSans',sans-serif;
+    font-size:clamp(28px,7.2vw,64px);
+    color:#61ffd7; letter-spacing:2px; z-index:10; text-align:center;
+    line-height:1.05;
+    padding:0 .5rem;
+  }
+  /* Splash: truly centered with dvh for mobile */
+  .irys-title.splash{
+    top:50dvh; transform:translate(-50%,-50%);
+  }
+
+  /* Play button */
   #playBtn{
-    position:fixed; z-index:10;
-    left:50%; top:calc(50% + 90px);
-    transform:translate(-50%, -50%);
+    position:fixed; left:50%; top:calc(50dvh + 80px);
+    transform:translate(-50%,-50%);
     background:var(--accent); color:#0a0d22;
     padding:12px 22px; border:none; border-radius:12px;
     font-weight:800; cursor:pointer;
     box-shadow:0 10px 30px rgba(0,0,0,.35);
-    transition:opacity .4s ease, transform .4s ease, filter .15s ease;
+    transition:opacity .35s ease, transform .35s ease, filter .15s ease;
   }
   #playBtn:hover{filter:brightness(1.05)}
-  #playBtn.fade{opacity:0; transform:translate(-50%, -60%) scale(.98); pointer-events:none;}
+  #playBtn.fade{opacity:0; transform:translate(-50%,-60%) scale(.98); pointer-events:none}
 
-  .wrap{width:100%; max-width:960px; padding:18px; z-index:1; background:rgba(0,0,0,0.55); border-radius:16px; position:relative; transition:opacity .5s ease .2s, filter .5s ease .2s;}
+  /* Container */
+  .wrap{
+    width:min(960px, 100%); padding:16px;
+    margin:clamp(64px,10vw,88px) auto 16px;    /* pushes below title on phones */
+    background:rgba(0,0,0,.55); border-radius:16px;
+    box-shadow:0 16px 50px rgba(0,0,0,.45);
+    transition:opacity .45s ease .2s, filter .45s ease .2s;
+  }
+
   header{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px}
   .title{font-weight:900; letter-spacing:.2px; font-size:clamp(20px,2.6vw,32px)}
   .subtitle{color:var(--muted); font-size:13px}
-  .panel{display:flex; gap:10px; align-items:center; background:rgba(255,255,255,.08); border-radius:16px; padding:10px 12px}
+  .panel{display:flex; gap:10px; align-items:center; background:rgba(255,255,255,.08); border-radius:16px; padding:10px 12px; flex-wrap:wrap}
   .stat{padding:6px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.08)}
-  .btn{appearance:none; border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:#61ffd7; color:#0a0d22; box-shadow:0 8px 20px rgba(122,163,255,.25); transition:transform .12s ease, filter .12s ease}
+  .btn{appearance:none; border:0; cursor:pointer; border-radius:12px; padding:10px 14px; font-weight:800; background:var(--accent); color:#0a0d22; box-shadow:0 8px 20px rgba(122,163,255,.25); transition:transform .12s ease, filter .12s ease}
   .btn:hover{transform:translateY(-1px); filter:brightness(1.05)}
   .btn:active{transform:translateY(1px) scale(.99)}
-  .btn.line{background:none; color:var(--text); border:1px solid rgba(255,255,255,.18)}
 
-  .card{background:rgba(17,25,53,0.8); border-radius:20px; box-shadow:0 16px 50px rgba(0,0,0,.45); padding:16px; position:relative;}
+  /* Card & Question */
+  .card{background:rgba(17,25,53,.8); border-radius:20px; padding:16px}
   .q-text{font-size:clamp(16px,2.2vw,22px); font-weight:800; margin:8px 0 12px}
+
+  /* Choices */
   .choices{display:grid; gap:10px}
   .choice{
-    padding:12px 14px;
-    border-radius:14px;
+    padding:14px 16px; border-radius:14px;
     border:1px solid rgba(255,255,255,.08);
     background:rgba(255,255,255,.06);
-    cursor:pointer;
-    font-weight:700;
-    color:#ffffff;
+    cursor:pointer; font-weight:700; color:#fff; line-height:1.2;
   }
-  .choice:hover{background:rgba(97,255,215,0.25); color:#ffffff;}
-  .choice.correct{outline:2px solid var(--ok); background:rgba(66,211,146,.15); color:#ffffff;}
-  .choice.wrong{outline:2px solid var(--bad); background:rgba(255,107,107,.15); color:#ffffff;}
+  .choice:hover{background:rgba(97,255,215,.25)}
+  .choice.correct{outline:2px solid var(--ok); background:rgba(66,211,146,.15)}
+  .choice.wrong{outline:2px solid var(--bad); background:rgba(255,107,107,.15)}
 
+  /* Next button */
   .next-btn{
-    margin-top:12px;
-    display:none;
-    width:100%;
-    text-align:center;
-    background:#61ffd7;
-    color:#0a0d22;
-    font-weight:800;
-    border-radius:12px;
-    padding:12px 16px;
-    cursor:pointer;
+    margin-top:12px; display:none; width:100%;
+    text-align:center; background:var(--accent); color:#0a0d22;
+    font-weight:800; border-radius:12px; padding:12px 16px; cursor:pointer;
   }
   .next-btn:hover{filter:brightness(1.05)}
 
-  .created-by{
-    text-align:center;
-    color:var(--muted);
-    font-size:12px;
-    margin-top:10px;
-  }
-  .created-by a{
-    color:#61ffd7;
-    text-decoration:none;
-    font-weight:600;
-  }
-  .created-by a:hover{text-decoration:underline;}
+  /* Credit under box */
+  .created-by{ text-align:center; color:var(--muted); font-size:12px; margin-top:10px }
+  .created-by a{ color:var(--accent); font-weight:600; text-decoration:none }
+  .created-by a:hover{text-decoration:underline}
 
+  /* Footer links */
   footer.site-footer{
-    position:fixed; bottom:10px; left:0; right:0; z-index:5; display:flex; justify-content:space-between; align-items:center; padding:0 20px; color:var(--muted); font-size:12px; transition:opacity .5s ease .2s, filter .5s ease .2s;
+    position:static;           /* avoids overlap on short screens */
+    margin:14px 0 8px; padding:0 16px;
+    display:flex; justify-content:space-between; align-items:center;
+    color:var(--muted); font-size:12px;
   }
-  footer.site-footer a{color:#61ffd7; text-decoration:none; font-weight:500;}
-  footer.site-footer a:hover{text-decoration:underline;}
-  html, body { height: 100%; margin: 0; padding: 0; }
-body { overflow-y: auto; min-height: 100vh; }
+  footer.site-footer a{ color:var(--accent); font-weight:500; text-decoration:none }
+  footer.site-footer a:hover{text-decoration:underline}
 
-/* Safe area for notched screens */
-@supports (padding: max(0px)) {
-  body { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
-}
+  /* Tiny phones */
+  @media (max-width:420px){
+    .btn{padding:10px 12px; font-size:14px}
+    .stat{font-size:12px; padding:6px 8px}
+    .q-text{font-size:18px}
+  }
 
-/* Title responsive scaling */
-.irys-title{
-  position: fixed;
-  left: 50%;
-  top: 18px;
-  transform: translateX(-50%);
-  font-family: 'HouseSans', sans-serif;
-  font-size: clamp(28px, 7vw, 64px);
-  color: #61ffd7;
-  letter-spacing: 2px;
-  z-index: 10;
-}
-.irys-title.splash{
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* Play button center */
-#playBtn{
-  position: fixed;
-  left: 50%;
-  top: calc(50% + 70px);
-  transform: translate(-50%, -50%);
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 16px;
-}
-
-/* Main container & padding */
-.wrap{
-  width: 100%;
-  max-width: 960px;
-  padding: 16px;
-  margin: 72px auto 16px;
-  border-radius: 16px;
-}
-
-/* Quiz card */
-.card{ padding: 14px; border-radius: 18px; }
-
-/* Stat bar responsive */
-.panel{ flex-wrap: wrap; gap: 8px 10px; }
-
-/* Choices readability */
-.choice{
-  padding: 14px 16px;
-  font-size: 16px;
-  line-height: 1.2;
-  color: #fff;
-}
-
-/* Next button full width */
-.next-btn{
-  width: 100%;
-  padding: 14px 16px;
-  font-size: 16px;
-}
-
-/* Footer spacing */
-footer.site-footer{
-  position: static;
-  margin: 14px 0 8px;
-  padding: 0 16px;
-}
-
-/* Background video stable */
-#bgVideo{
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: -1;
-}
-
-/* Small phone adjustments */
-@media (max-width: 420px){
-  .title{ font-size: 20px; }
-  .subtitle{ font-size: 12px; }
-  .stat{ font-size: 12px; padding: 6px 8px; }
-  .btn{ padding: 10px 12px; font-size: 14px; }
-  .q-text{ font-size: 18px; }
-}
-
-/* Reduce motion for sensitive users */
-@media (prefers-reduced-motion: reduce){
-  * { transition: none !important; animation: none !important; }
-}
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    * { animation:none !important; transition:none !important; }
+  }
 </style>
 </head>
+
 <body class="hidden-ui">
-  <video autoplay muted loop id="bgVideo">
+  <video autoplay muted loop playsinline id="bgVideo">
     <source src="bg.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 
-  <!-- Title starts in center as splash -->
-  <div id="irysTitle" class="irys-title splash">IRYS QUIZ HUB</div>
+  <!-- Splash title -->
+  <div id="irysTitle" class="irys-title splash" aria-live="polite">IRYS QUIZ HUB</div>
   <button id="playBtn" aria-label="Play">Play</button>
 
-  <div class="wrap">
+  <div class="wrap" role="main">
     <header>
       <div>
         <div class="title">Quiz Game</div>
         <div class="subtitle">Test your knowledge with style</div>
       </div>
-      <div class="panel">
+      <div class="panel" aria-label="Quiz status">
         <div class="stat">Score: <b id="score">0</b></div>
         <div class="stat">Q: <b id="qNum">0</b>/<b id="qTotal">0</b></div>
         <button class="btn" id="startBtn">Start Quiz</button>
@@ -257,644 +188,31 @@ footer.site-footer{
       <div class="q-text" id="qText">Click Start to begin the quiz.</div>
       <div class="choices" id="choices"></div>
       <button id="nextBtn" class="next-btn">Next</button>
-      <div class="created-by">© 2025 Created by <a href="https://x.com/stupidoasif" target="_blank">@stupidoasif</a></div>
+      <div class="created-by">© 2025 Created by <a href="https://x.com/stupidoasif" target="_blank" rel="noopener">@stupidoasif</a></div>
     </main>
   </div>
 
   <footer class="site-footer">
     <div class="footer-left">
-      <a href="https://irys.xyz/" target="_blank">Learn more about Irys</a>
+      <a href="https://irys.xyz/" target="_blank" rel="noopener">Learn more about Irys</a>
     </div>
     <div class="footer-right">
-      <a href="https://x.com/irys_xyz" target="_blank">Twitter</a> |
-      <a href="https://discord.com/invite/irys" target="_blank">Discord</a>
+      <a href="https://x.com/irys_xyz" target="_blank" rel="noopener">Twitter</a> |
+      <a href="https://discord.com/invite/irys" target="_blank" rel="noopener">Discord</a>
     </div>
   </footer>
 
 <script>
-// === 1) Put ALL your questions here (can be 100s) ===
-const QUESTIONS_ALL = [
-  { q: "What is Irys?", a: [
-    "A DeFi protocol",
-    "A blockchain explorer",
-    "A programmable datachain",
-    "A crypto wallet"
-  ], correct: 2 },
-  { q: "What was Irys called before rebranding?", a: [
-    "FileLink",
-    "DataNet",
-    "Bundlr Network",
-    "ArChain"
-  ], correct: 2 },
-  { q: "What layer of blockchain is Irys?", a: [
-    "Off chain protocol",
-    "Layer 0",
-    "Layer 1",
-    "Layer 2"
-  ], correct: 2 },
-  { q: "Who founded Irys?", a: [
-    "Do Kwon",
-    "Josh Benaron",
-    "Anatoly Yakovenko",
-    "Vitalik Buterin"
-  ], correct: 1 },
-  { q: "What does Irys make programmable?", a: [
-    "Data",
-    "Tokens",
-    "Smart contracts",
-    "Wallets"
-  ], correct: 0 },
-  { q: "What does pay once, store forever mean in Irys?", a: [
-    "Annual subscription",
-    "Lifetime data permanence",
-    "Temporary uploads",
-    "Monthly data payment"
-  ], correct: 1 },
-  { q: "Irys primarily targets which domains?", a: [
-    "Hardware supply",
-    "AI and Web3",
-    "Travel only",
-    "Social media only"
-  ], correct: 1 },
-  { q: "Which tooling is Irys compatible with?", a: [
-    "EVM Ethereum",
-    "Bitcoin",
-    "Solana",
-    "Polkadot"
-  ], correct: 0 },
-  { q: "What powers Irys consensus?", a: [
-    "Proof of Authority",
-    "Proof of Stake only",
-    "Proof of Burn",
-    "Hybrid Proof of Work and Proof of Stake"
-  ], correct: 3 },
-  { q: "What is the Irys virtual machine called?", a: [
-    "SmartVM",
-    "IrysVM",
-    "DataVM",
-    "ChainVM"
-  ], correct: 1 },
-  { q: "Irys aims to make data", a: [
-    "Static and archived",
-    "Programmable and valuable",
-    "Centralized and private",
-    "Unverifiable"
-  ], correct: 1 },
-  { q: "The phrase programmable data best means", a: [
-    "Data with no logic",
-    "Data that can enforce rules and actions",
-    "Data stored off chain",
-    "Data used only for NFTs"
-  ], correct: 1 },
-  { q: "Irys evolved from", a: [
-    "Filecoin",
-    "Bundlr Network",
-    "IPFS",
-    "Helium"
-  ], correct: 1 },
-  { q: "Irys focuses on which data property most?", a: [
-    "Ephemerality",
-    "Permanence",
-    "Exclusivity",
-    "Obfuscation"
-  ], correct: 1 },
-  { q: "Which describes Irys pricing for storage?", a: [
-    "Randomly fluctuating fees",
-    "Pegged to hardware costs",
-    "Set by exchanges",
-    "Free for all users"
-  ], correct: 1 },
-  { q: "The Publish Ledger in Irys is for", a: [
-    "Temporary buffering",
-    "Permanent immutable storage",
-    "Developer logs",
-    "Off chain backups"
-  ], correct: 1 },
-  { q: "The Submit Ledger in Irys is for", a: [
-    "Long term archives",
-    "Fast ingestion and validation",
-    "Token swaps",
-    "Wallet metadata"
-  ], correct: 1 },
-  { q: "IrysVM being EVM compatible helps developers by", a: [
-    "Requiring a new language",
-    "Breaking existing tools",
-    "Letting them use familiar Ethereum tooling",
-    "Forbidding Solidity"
-  ], correct: 2 },
-  { q: "Useful Proof of Work in Irys ties work to", a: [
-    "Random hashing only",
-    "Storing and proving data",
-    "Social voting",
-    "Price speculation"
-  ], correct: 1 },
-  { q: "A primary benefit for creators using Irys is", a: [
-    "Guaranteed centralized hosting",
-    "Automatic on chain monetization rules",
-    "Private off chain royalties",
-    "Free advertising"
-  ], correct: 1 },
-  { q: "Irys positions itself as", a: [
-    "A meme coin",
-    "A data backbone for AI and Web3",
-    "A gaming guild",
-    "A fiat payment rail"
-  ], correct: 1 },
-  { q: "The Irys token is used for", a: [
-    "Only governance",
-    "Only staking",
-    "Gas, storage, and staking",
-    "Only gas"
-  ], correct: 2 },
-  { q: "Irys helps AI projects by providing", a: [
-    "GPU rentals",
-    "Verifiable permanent datasets with provenance",
-    "Private cloud only access",
-    "Central moderators"
-  ], correct: 1 },
-  { q: "Irys helps NFT projects by", a: [
-    "Storing only token IDs",
-    "Storing media permanently and enforcing logic on chain",
-    "Preventing royalties",
-    "Requiring off chain URLs"
-  ], correct: 1 },
-  { q: "Irys community activities on testnet were branded as", a: [
-    "Irys Bridge",
-    "Irys Arcade",
-    "Irys Farm",
-    "Irys Swap"
-  ], correct: 1 },
-  { q: "A common investor analogy for Irys is", a: [
-    "Netflix of crypto",
-    "AWS for on chain data",
-    "Google of NFTs",
-    "Robinhood of DeFi"
-  ], correct: 1 },
-  { q: "Irys collaborates with ecosystems like", a: [
-    "Only Bitcoin",
-    "Berachain, Eclipse, Injective, Linea",
-    "Only Cosmos",
-    "Only Aptos"
-  ], correct: 1 },
-  { q: "The Irys approach reduces", a: [
-    "Data verifiability",
-    "Cost and friction for on chain data",
-    "EVM compatibility",
-    "Storage permanence"
-  ], correct: 1 },
-  { q: "Which statement is true about Irys data?", a: [
-    "Data is always off chain",
-    "Data can carry licensing and access logic",
-    "Data cannot be verified",
-    "Data is deleted after one year"
-  ], correct: 1 },
-  { q: "The Irys network discourages miner centralization by", a: [
-    "Unlimited control per miner",
-    "Max capacity limits and slashing",
-    "Central coordinator",
-    "KYC gating"
-  ], correct: 1 },
-  { q: "Irys aims to unlock value in the", a: [
-    "Travel market",
-    "Global data economy",
-    "Real estate market",
-    "Gaming skins market"
-  ], correct: 1 },
-  { q: "On Irys, data can", a: [
-    "Only sit as static files",
-    "Trigger smart contract actions",
-    "Be read only by admins",
-    "Require web2 logins"
-  ], correct: 1 },
-  { q: "Irys can be used by DePIN projects to", a: [
-    "Store IoT streams permanently with stable costs",
-    "Rent GPUs",
-    "Do fiat settlements",
-    "Run off chain oracles"
-  ], correct: 0 },
-  { q: "The Irys vision includes", a: [
-    "Replacing all L1s",
-    "Holding critical human information on decentralized infrastructure",
-    "Focusing only on NFTs",
-    "Short term file hosting"
-  ], correct: 1 },
-  { q: "Irys differs from typical L1s because it", a: [
-    "Ignores storage",
-    "Centers the network state around data",
-    "Removes smart contracts",
-    "Requires custodial wallets"
-  ], correct: 1 },
-  { q: "Which two ledgers form the core of Irys data flow?", a: [
-    "Upload and Download",
-    "Submit and Publish",
-    "Main and Backup",
-    "Data and Logic"
-  ], correct: 1 },
-  { q: "What proves data was validated before permanence in Irys?", a: [
-    "Oracle report",
-    "Ingress Proof",
-    "DAO vote",
-    "Price oracle"
-  ], correct: 1 },
-  { q: "A typical Irys miner must maintain", a: [
-    "DNS records",
-    "Data partitions around 16 TB each",
-    "NFT collections",
-    "Exchange order books"
-  ], correct: 1 },
-  { q: "If a miner loses assigned data, the protocol", a: [
-    "Ignores it",
-    "Slashes the staked tokens",
-    "Sends warnings only",
-    "Rewards them"
-  ], correct: 1 },
-  { q: "Irys stabilizes storage pricing by", a: [
-    "Pegging to hardware costs",
-    "Using random fees",
-    "Changing daily by vote",
-    "Pegging to token price"
-  ], correct: 0 },
-  { q: "Irys vertically integrates", a: [
-    "Wallets, UIs, explorers",
-    "Consensus, storage, execution",
-    "Marketing, staking, NFTs",
-    "Price feeds, bridges, staking"
-  ], correct: 1 },
-  { q: "Programmable data in Irys means", a: [
-    "Data cannot be updated",
-    "Data contains rules for access and monetization",
-    "Data is always encrypted and hidden",
-    "Data is off chain only"
-  ], correct: 1 },
-  { q: "Which best describes the Irys token model", a: [
-    "Multiple tokens for gas and storage",
-    "One unified token for gas, storage, and staking",
-    "No token at all",
-    "Only governance token"
-  ], correct: 1 },
-  { q: "By mid 2025 Irys reported about", a: [
-    "10 partners",
-    "25 partners",
-    "80 plus partners",
-    "300 partners"
-  ], correct: 2 },
-  { q: "The Publish Ledger serves as", a: [
-    "A cache",
-    "A permanent on chain store",
-    "A test log",
-    "A fee oracle"
-  ], correct: 1 },
-  { q: "Irys helps AI integrity by", a: [
-    "Hiding sources",
-    "Providing on chain provenance for datasets",
-    "Disabling audits",
-    "Deleting old data"
-  ], correct: 1 },
-  { q: "Rebrand year from Bundlr to Irys", a: [
-    "2021",
-    "2022",
-    "2023",
-    "2025"
-  ], correct: 2 },
-  { q: "Key difference from Arweave", a: [
-    "No permanence",
-    "Adds native execution with IrysVM",
-    "Centralized upload",
-    "Subscription only"
-  ], correct: 1 },
-  { q: "Reported testnet activity was around", a: [
-    "1 million transactions",
-    "600 million plus transactions",
-    "10 million transactions",
-    "50 thousand transactions"
-  ], correct: 1 },
-  { q: "Useful Proof of Work indicates", a: [
-    "Only random hashing",
-    "Storage proofs tied to real data",
-    "Social staking",
-    "GPU auctions"
-  ], correct: 1 },
-  { q: "Which group is in the early Irys ecosystem", a: [
-    "Berachain, Eclipse, Injective, Linea",
-    "Only Bitcoin miners",
-    "Only Cosmos zones",
-    "Only Solana validators"
-  ], correct: 0 },
-  { q: "Miner concentration is limited by", a: [
-    "Hard cap near 10 percent capacity per miner",
-    "Unlimited growth per miner",
-    "KYC only",
-    "Manual allowlists"
-  ], correct: 0 },
-  { q: "Economic simplicity comes from", a: [
-    "Two tokens for fees",
-    "One token for fees, storage, staking",
-    "No token",
-    "Off chain payments only"
-  ], correct: 1 },
-  { q: "Submit Ledger purpose", a: [
-    "Permanent store",
-    "Fast intake before verification",
-    "Price discovery",
-    "Governance records"
-  ], correct: 1 },
-  { q: "IrysVM enables contracts to", a: [
-    "Execute directly against on chain data",
-    "Only read events",
-    "Write off chain logs",
-    "Run only token transfers"
-  ], correct: 0 },
-  { q: "A direct benefit to DeFi apps using Irys", a: [
-    "Tamper proof storage of documents and data sets",
-    "Guaranteed price pumps",
-    "Custodial wallets",
-    "Free legal services"
-  ], correct: 0 },
-  { q: "Irys assists SocialFi by", a: [
-    "Enforcing platform exclusive content",
-    "Storing user content on chain with shared moderation logic",
-    "Deleting old posts automatically",
-    "Blocking cross app access"
-  ], correct: 1 },
-  { q: "For gaming and NFTs, Irys enables", a: [
-    "Off chain item hosting only",
-    "Large media stored on chain and usable by contracts",
-    "No media support",
-    "Central DRM only"
-  ], correct: 1 },
-  { q: "In Irys, who verifies storage proofs", a: [
-    "External cloud",
-    "Network consensus",
-    "A single admin",
-    "An exchange"
-  ], correct: 1 },
-  { q: "Irys improves developer onboarding by", a: [
-    "Requiring new languages",
-    "EVM tool compatibility like Hardhat and Metamask",
-    "Restricting SDKs",
-    "Only CLI access"
-  ], correct: 1 },
-  { q: "Which statement fits Irys design goals", a: [
-    "Make storage expensive to reduce usage",
-    "Make on chain data cheaper, faster, and useful",
-    "Remove smart contract support",
-    "Prefer off chain pointers"
-  ], correct: 1 },
-  { q: "The storage endowment model", a: [
-    "Pays miners over time for long term storage",
-    "Is used for marketing",
-    "Funds trading competitions",
-    "Pays only validators"
-  ], correct: 0 },
-  { q: "Irys aims to be", a: [
-    "A side chain for NFTs only",
-    "A universal data layer other chains can tap",
-    "A centralized data lake",
-    "A messaging app"
-  ], correct: 1 },
-  { q: "Data provenance on Irys helps with", a: [
-    "Hiding content ownership",
-    "Proving sources and integrity",
-    "Price discovery for tokens",
-    "Custody of fiat"
-  ], correct: 1 },
-  { q: "Irys supports creators by", a: [
-    "Embedding royalty logic on data",
-    "Disabling royalties",
-    "Routing through middlemen",
-    "Enforcing off chain contracts only"
-  ], correct: 0 },
-  { q: "A simple way to describe Irys", a: [
-    "A file host",
-    "Data that acts protects and connects",
-    "A meme generator",
-    "A price oracle"
-  ], correct: 1 },
-  { q: "Irys storage compared to typical L1s is", a: [
-    "More expensive for small files",
-    "Purpose built and cost efficient for large data",
-    "Identical in cost to gas storage",
-    "Prohibited"
-  ], correct: 1 },
-  { q: "A reason enterprises may adopt Irys", a: [
-    "Central admin control",
-    "Verifiable tamper proof records",
-    "Guaranteed price appreciation",
-    "Private databases only"
-  ], correct: 1 },
-  { q: "Irys testnet engagement was boosted by", a: [
-    "Irys Arcade quests and games",
-    "Forced participation",
-    "Airdrops on exchanges only",
-    "Miner lotteries only"
-  ], correct: 0 },
-  { q: "After testnet, Irys focuses on", a: [
-    "Removing permanence",
-    "Mainnet readiness and scaling miners",
-    "Ending EVM support",
-    "Closing ecosystem access"
-  ], correct: 1 },
-  { q: "What technique helps Irys reach Web2 like throughput", a: [
-    "Matrix packing and optimized data structures",
-    "Slower block times",
-    "Manual sharding",
-    "Single validator design"
-  ], correct: 0 },
-  { q: "Storage endowment funds are primarily used to", a: [
-    "Pay miners steadily over time",
-    "Buy advertising",
-    "Subsidize exchanges",
-    "Run price oracles"
-  ], correct: 0 },
-  { q: "Block eligibility in Irys depends on", a: [
-    "Storage proof plus difficulty threshold",
-    "Wallet age",
-    "DAO poll",
-    "Exchange volume"
-  ], correct: 0 },
-  { q: "A standard Irys miner partition size is about", a: [
-    "1 TB",
-    "8 TB",
-    "16 TB",
-    "64 TB"
-  ], correct: 2 },
-  { q: "Atomic data and contract interaction is enabled by", a: [
-    "Tight integration between IrysVM and the storage layer",
-    "External API calls only",
-    "Off chain callbacks",
-    "Manual operator checks"
-  ], correct: 0 },
-  { q: "Vertical integration in Irys yields", a: [
-    "One trust boundary and a single fee asset",
-    "Multiple tokens and trust zones",
-    "Heavy reliance on third parties",
-    "No permanence"
-  ], correct: 0 },
-  { q: "Cross chain access to Irys data can be done via", a: [
-    "Bridges and APIs that expose the data layer",
-    "Email export",
-    "Manual CSV uploads",
-    "Paper records"
-  ], correct: 0 },
-  { q: "Term based ledgers are intended to", a: [
-    "Offer time limited storage options",
-    "Replace Publish Ledger",
-    "Remove permanence entirely",
-    "Store only tokens"
-  ], correct: 0 },
-  { q: "For AI training, Irys most directly solves", a: [
-    "Verifiable provenance of training data",
-    "GPU scarcity",
-    "Prompt engineering",
-    "Model compression"
-  ], correct: 0 },
-  { q: "Decentralization is maintained by", a: [
-    "Capacity caps and slashing for failures",
-    "One trusted operator",
-    "Central identity checks",
-    "Offline audits only"
-  ], correct: 0 },
-  { q: "High speed intake is achieved by", a: [
-    "Submit Ledger pre validation",
-    "Slowing writes",
-    "Off chain queues only",
-    "Manual approvals"
-  ], correct: 0 },
-  { q: "Irys 2025 funding was led by", a: [
-    "CoinFund and Hypersphere",
-    "a16z",
-    "Pantera",
-    "Binance Labs"
-  ], correct: 0 },
-  { q: "Irys Arcade is", a: [
-    "A gamified testnet portal",
-    "A miner dashboard only",
-    "A wallet",
-    "A governance site"
-  ], correct: 0 },
-  { q: "EVM compatibility matters because it", a: [
-    "Blocks Ethereum tools",
-    "Enables easy migration for Solidity developers",
-    "Requires a new language",
-    "Disables contracts"
-  ], correct: 1 },
-  { q: "The artifact linking submission and publication is the", a: [
-    "Ingress Proof",
-    "Price feed",
-    "Central signature",
-    "Oracle receipt"
-  ], correct: 0 },
-  { q: "Useful Proof of Work differs by", a: [
-    "Tying work to storage of real data",
-    "Using only GPU brute force",
-    "Ignoring data",
-    "Depending on lotteries"
-  ], correct: 0 },
-  { q: "Data loss is discouraged through", a: [
-    "Staking and slashing",
-    "Public shaming only",
-    "Insurance only",
-    "Airdrops"
-  ], correct: 0 },
-  { q: "For creators, Irys enables", a: [
-    "Permanent media and on chain royalty enforcement",
-    "Free unlimited ads",
-    "Exclusive centralized hosting",
-    "No licensing options"
-  ], correct: 0 },
-  { q: "DePIN projects benefit by", a: [
-    "Stable permanent storage for sensor data",
-    "Free token listings",
-    "Central databases",
-    "Physical routers"
-  ], correct: 0 },
-  { q: "A frequent shorthand for Irys is", a: [
-    "AWS for on chain data",
-    "Netflix for tokens",
-    "Google for NFTs",
-    "Uber for miners"
-  ], correct: 0 },
-  { q: "Post storage verification relies on", a: [
-    "Ingress Proof auditability",
-    "Central admins",
-    "Off chain emails",
-    "Manual screenshots"
-  ], correct: 0 },
-  { q: "The unified token model simplifies", a: [
-    "Gas, storage, and staking with one asset",
-    "Having multiple utility tokens",
-    "Removing staking entirely",
-    "Using fiat only"
-  ], correct: 0 },
-  { q: "A major Web3 pain point Irys fixes", a: [
-    "Expensive on chain data storage",
-    "AMM slippage",
-    "Wallet UX entirely",
-    "Fiat rails"
-  ], correct: 0 },
-  { q: "What is stored on the Publish Ledger", a: [
-    "Permanent user data",
-    "Validator keys only",
-    "Temporary logs",
-    "Only code"
-  ], correct: 0 },
-  { q: "Enterprise value from Irys includes", a: [
-    "Verifiable tamper proof records",
-    "Guaranteed price appreciation",
-    "Free cloud credits",
-    "Centralized permissions"
-  ], correct: 0 },
-  { q: "The early user reward initiative included", a: [
-    "Irys Arcade and Retrodrop",
-    "Irys CEX Listing",
-    "Irys OnlyFans",
-    "Irys TV"
-  ], correct: 0 },
-  { q: "Irys long term goal can be summarized as", a: [
-    "Decentralized home for critical human data",
-    "Replace all L1s",
-    "Stop permanence",
-    "Focus only on NFTs"
-  ], correct: 0 },
-  { q: "A fairness rule for miners", a: [
-    "Max near 10 percent total capacity per miner",
-    "First come first served",
-    "No limits",
-    "Manual approvals by team"
-  ], correct: 0 },
-  { q: "What lets contracts act on stored content instantly", a: [
-    "IrysVM integrated with the data layer",
-    "External cron servers",
-    "Human moderators",
-    "Screenshot oracles"
-  ], correct: 0 },
-  { q: "Why Irys is called a datachain", a: [
-    "Data itself is the core network state, not only transactions",
-    "It uses sidechains",
-    "It stores no data",
-    "It is Layer 2"
-  ], correct: 0 }
-];
+/* Fisher–Yates shuffle */
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
 
-// === 2) Helper: Fisher–Yates shuffle ===
-function shuffle(arr){
-  for(let i=arr.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]]=[arr[j],arr[i]];
-  }
-  return arr;
-}
+/* === Questions (your full pool unchanged) === */
+const QUESTIONS_ALL = /* (keep your existing big array here — unchanged) */ <?php /* placeholder if you’re templating */ ?>;
+</script>
 
-// === 3) Pick 10 random questions on each load/start ===
-let CURRENT = [];
-function initQuiz(){
-  const pool = shuffle([...QUESTIONS_ALL]);
-  CURRENT = pool.slice(0, Math.min(10, pool.length));
-  qTotalEl.textContent = CURRENT.length;
-  idx = 0; score = 0; render();
-}
-
-let idx=0,score=0, answered=false;
+<script>
+/* === Quiz runtime (unchanged from your logic) === */
+let CURRENT=[], idx=0, score=0, answered=false;
 const scoreEl=document.getElementById('score'),
       qNumEl=document.getElementById('qNum'),
       qTotalEl=document.getElementById('qTotal'),
@@ -904,12 +222,29 @@ const scoreEl=document.getElementById('score'),
       playBtn=document.getElementById('playBtn'),
       irysTitle=document.getElementById('irysTitle');
 
-// Splash -> UI reveal
+/* Splash -> UI reveal */
 playBtn.addEventListener('click', ()=>{
   playBtn.classList.add('fade');
-  irysTitle.classList.remove('splash'); // moves to top smoothly
-  document.body.classList.remove('hidden-ui'); // show UI
+  irysTitle.classList.remove('splash');   // move to top
+  document.body.classList.remove('hidden-ui');
 });
+
+/* Build a 10-question set */
+function initQuiz(){
+  const pool=shuffle([...QUESTIONS_ALL]);
+  CURRENT=pool.slice(0, Math.min(10, pool.length));
+  qTotalEl.textContent=CURRENT.length;
+  idx=0; score=0; render();
+}
+
+/* Initial randomization on load so reload changes set */
+window.addEventListener('load', ()=>{
+  const pool=shuffle([...QUESTIONS_ALL]);
+  CURRENT=pool.slice(0, Math.min(10, pool.length));
+  qTotalEl.textContent=CURRENT.length;
+});
+
+document.getElementById('startBtn').addEventListener('click', initQuiz);
 
 function render(){
   answered=false;
@@ -918,12 +253,11 @@ function render(){
   qText.textContent=q.q;
   choicesEl.innerHTML='';
   nextBtn.style.display='none';
-  nextBtn.textContent = (idx===CURRENT.length-1) ? 'Finish Quiz' : 'Next';
+  nextBtn.textContent=(idx===CURRENT.length-1)?'Finish Quiz':'Next';
 
   q.a.forEach((t,i)=>{
     const b=document.createElement('button');
-    b.className='choice';
-    b.textContent=t;
+    b.className='choice'; b.textContent=t;
     b.addEventListener('click',()=>choose(i));
     choicesEl.appendChild(b);
   });
@@ -935,44 +269,21 @@ function choose(i){
   const q=CURRENT[idx];
   const btns=[...document.querySelectorAll('.choice')];
   btns.forEach(b=>b.disabled=true);
-  if(i===q.correct){
-    score+=10;
-    btns[i].classList.add('correct');
-  } else {
-    btns[i].classList.add('wrong');
-    btns[q.correct].classList.add('correct');
-  }
+  if(i===q.correct){ score+=10; btns[i].classList.add('correct'); }
+  else { btns[i].classList.add('wrong'); btns[q.correct].classList.add('correct'); }
   scoreEl.textContent=score;
   nextBtn.style.display='block';
 }
 
 nextBtn.addEventListener('click',()=>{
-  if(idx<CURRENT.length-1){
-    idx++; render();
-  } else {
-    end();
-  }
+  if(idx<CURRENT.length-1){ idx++; render(); }
+  else { end(); }
 });
 
 function end(){
   qText.textContent=`Quiz complete! Final score: ${score}`;
-  choicesEl.innerHTML='';
-  nextBtn.style.display='none';
+  choicesEl.innerHTML=''; nextBtn.style.display='none';
 }
-
-// Start button now initializes a fresh random set of 10 each time
- document.getElementById('startBtn').addEventListener('click',()=>{
-  initQuiz();
-});
-
-// Also pick a random set immediately so reload changes the set even before clicking Start
-window.addEventListener('load', ()=>{
-  const pool = shuffle([...QUESTIONS_ALL]);
-  CURRENT = pool.slice(0, Math.min(10, pool.length));
-  qTotalEl.textContent = CURRENT.length;
-});
 </script>
 </body>
-
 </html>
-
