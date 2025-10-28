@@ -116,7 +116,7 @@
 
       /* Play button shown on splash */
       #playBtn {
-        position: fixed; z-index: 10;
+        position: fixed; z-index: 9999;
         left: 50%; top: calc(50% + 90px);
         transform: translate(-50%, -50%);
         background: var(--accent); color: #0a0d22;
@@ -124,6 +124,7 @@
         font-weight: 800; cursor: pointer;
         box-shadow: 0 10px 30px rgba(0,0,0,.35);
         transition: opacity .4s ease, transform .4s ease, filter .15s ease;
+        pointer-events: auto; /* ensure clickable even if parent changes */
       }
       #playBtn:hover { filter: brightness(1.05); }
       #playBtn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
@@ -232,7 +233,7 @@
 
     <!-- Title starts in center as splash -->
     <div id="irysTitle" class="irys-title splash" role="heading" aria-level="1">IRYS QUIZ HUB</div>
-    <button id="playBtn" aria-label="Play the quiz">Play</button>
+    <button id="playBtn" type="button" aria-label="Play the quiz">Play</button>
 
     <div class="wrap" role="region" aria-label="Quiz container">
       <header>
@@ -268,11 +269,22 @@
     </footer>
 
     <script>
-      'use strict';
+      (function(){
+        'use strict';
 
-      // === 1) Questions (unchanged except formatting) ===
-      const QUESTIONS_ALL = [
-        { q: "What is Irys?", a: [
+        // Run after DOM is ready just in case some browsers parse slower
+        function onReady(fn){
+          if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(fn, 0);
+          } else {
+            document.addEventListener('DOMContentLoaded', fn);
+          }
+        }
+
+        onReady(function(){
+          // === 1) Questions (unchanged except formatting) ===
+          const QUESTIONS_ALL = [
+             { q: "What is Irys?", a: [
     "A DeFi protocol",
     "A blockchain explorer",
     "A programmable datachain",
@@ -874,128 +886,133 @@
   ], correct: 0 }
 ];
 
-      ];
+          // === 2) Helper: Fisher–Yates shuffle ===
+          function shuffle(arr){
+            for(let i=arr.length-1;i>0;i--){
+              const j = Math.floor(Math.random()*(i+1));
+              [arr[i],arr[j]]=[arr[j],arr[i]];
+            }
+            return arr;
+          }
 
-      // === 2) Helper: Fisher–Yates shuffle ===
-      function shuffle(arr){
-        for(let i=arr.length-1;i>0;i--){
-          const j = Math.floor(Math.random()*(i+1));
-          [arr[i],arr[j]]=[arr[j],arr[i]];
-        }
-        return arr;
-      }
+          // === 3) Pick 10 random questions on each load/start ===
+          let CURRENT = [];
+          let idx = 0, score = 0, answered = false;
 
-      // === 3) Pick 10 random questions on each load/start ===
-      let CURRENT = [];
-      let idx = 0, score = 0, answered = false;
+          const scoreEl = document.getElementById('score');
+          const qNumEl = document.getElementById('qNum');
+          const qTotalEl = document.getElementById('qTotal');
+          const qText = document.getElementById('qText');
+          const choicesEl = document.getElementById('choices');
+          const nextBtn = document.getElementById('nextBtn');
+          const playBtn = document.getElementById('playBtn');
+          const irysTitle = document.getElementById('irysTitle');
+          const ariaStatus = document.getElementById('ariaStatus');
+          const bgVideo = document.getElementById('bgVideo');
+          const startBtn = document.getElementById('startBtn');
 
-      const scoreEl = document.getElementById('score');
-      const qNumEl = document.getElementById('qNum');
-      const qTotalEl = document.getElementById('qTotal');
-      const qText = document.getElementById('qText');
-      const choicesEl = document.getElementById('choices');
-      const nextBtn = document.getElementById('nextBtn');
-      const playBtn = document.getElementById('playBtn');
-      const irysTitle = document.getElementById('irysTitle');
-      const ariaStatus = document.getElementById('ariaStatus');
-      const bgVideo = document.getElementById('bgVideo');
+          // Defensive: bail if play button missing
+          if (!playBtn) return;
 
-      // Splash -> UI reveal
-      playBtn.addEventListener('click', () => {
-        playBtn.classList.add('fade');
-        irysTitle.classList.remove('splash'); // moves to top smoothly
-        document.body.classList.remove('hidden-ui'); // show UI
-        // Some mobile browsers won't autoplay even muted; try play(), ignore errors.
-        if (bgVideo && bgVideo.paused) {
-          bgVideo.play().catch(() => {/* ignore */});
-        }
-      });
-
-      function initQuiz(){
-        const pool = shuffle([...QUESTIONS_ALL]);
-        CURRENT = pool.slice(0, Math.min(10, pool.length));
-        qTotalEl.textContent = CURRENT.length;
-        idx = 0; score = 0; render();
-      }
-
-      function render(){
-        answered = false;
-        qNumEl.textContent = String(idx + 1);
-        const q = CURRENT[idx];
-        qText.textContent = q.q;
-        choicesEl.innerHTML = '';
-        nextBtn.style.display = 'none';
-        nextBtn.textContent = (idx === CURRENT.length - 1) ? 'Finish Quiz' : 'Next';
-
-        q.a.forEach((t, i) => {
-          const b = document.createElement('button');
-          b.className = 'choice';
-          b.type = 'button';
-          b.textContent = t;
-          b.setAttribute('aria-pressed', 'false');
-          b.addEventListener('click', () => choose(i));
-          b.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(i); }
+          // Splash -> UI reveal
+          playBtn.addEventListener('click', function(){
+            playBtn.classList.add('fade');
+            if (irysTitle) irysTitle.classList.remove('splash'); // moves to top smoothly
+            document.body.classList.remove('hidden-ui'); // show UI
+            try {
+              if (bgVideo && bgVideo.paused) { bgVideo.muted = true; bgVideo.play().catch(function(){}); }
+            } catch(_) {}
           });
-          choicesEl.appendChild(b);
+
+          function initQuiz(){
+            const pool = shuffle([].concat(QUESTIONS_ALL));
+            CURRENT = pool.slice(0, Math.min(10, pool.length));
+            if (qTotalEl) qTotalEl.textContent = String(CURRENT.length);
+            idx = 0; score = 0; render();
+          }
+
+          function render(){
+            answered = false;
+            if (qNumEl) qNumEl.textContent = String(idx + 1);
+            const q = CURRENT[idx];
+            if (qText) qText.textContent = q.q;
+            if (choicesEl) choicesEl.innerHTML = '';
+            if (nextBtn) {
+              nextBtn.style.display = 'none';
+              nextBtn.textContent = (idx === CURRENT.length - 1) ? 'Finish Quiz' : 'Next';
+            }
+
+            q.a.forEach(function(t, i){
+              const b = document.createElement('button');
+              b.className = 'choice';
+              b.type = 'button';
+              b.textContent = t;
+              b.setAttribute('aria-pressed', 'false');
+              b.addEventListener('click', function(){ choose(i); });
+              b.addEventListener('keydown', function(ev){
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(i); }
+              });
+              choicesEl.appendChild(b);
+            });
+
+            if (ariaStatus) ariaStatus.textContent = 'Question ' + (idx + 1) + ' of ' + CURRENT.length;
+          }
+
+          function choose(i){
+            if (answered) return;
+            answered = true;
+            const q = CURRENT[idx];
+            const btns = Array.prototype.slice.call(document.querySelectorAll('.choice'));
+            btns.forEach(function(b){ b.disabled = true; b.setAttribute('aria-pressed', 'true'); });
+            if (i === q.correct){
+              score += 10;
+              btns[i].classList.add('correct');
+              if (ariaStatus) ariaStatus.textContent = 'Correct!';
+            } else {
+              btns[i].classList.add('wrong');
+              btns[q.correct].classList.add('correct');
+              if (ariaStatus) ariaStatus.textContent = 'Wrong. Highlighted answer is correct.';
+            }
+            if (scoreEl) scoreEl.textContent = String(score);
+            if (nextBtn){ nextBtn.style.display = 'block'; nextBtn.focus({ preventScroll: true }); }
+          }
+
+          if (nextBtn) {
+            nextBtn.addEventListener('click', function(){
+              if (idx < CURRENT.length - 1){ idx++; render(); }
+              else { end(); }
+            });
+          }
+
+          function end(){
+            if (qText) qText.textContent = 'Quiz complete! Final score: ' + score;
+            if (choicesEl) choicesEl.innerHTML = '';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (ariaStatus) ariaStatus.textContent = 'Quiz complete';
+          }
+
+          // Start button initializes a fresh random set of 10 each time
+          if (startBtn) {
+            startBtn.addEventListener('click', function(){ initQuiz(); });
+          }
+
+          // Pick a random set immediately so reload changes the set before clicking Start
+          window.addEventListener('load', function(){
+            const pool = shuffle([].concat(QUESTIONS_ALL));
+            CURRENT = pool.slice(0, Math.min(10, pool.length));
+            if (qTotalEl) qTotalEl.textContent = String(CURRENT.length);
+          });
+
+          // Respect reduced motion and/or user data saver: pause video if either is on
+          try {
+            var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+            var dataSaver = (typeof navigator !== 'undefined' && 'connection' in navigator && navigator.connection && navigator.connection.saveData);
+            if ((prefersReducedMotion && prefersReducedMotion.matches) || dataSaver) {
+              if (bgVideo) { bgVideo.pause(); bgVideo.currentTime = 0; }
+            }
+          } catch(_) {}
         });
-
-        ariaStatus.textContent = `Question ${idx + 1} of ${CURRENT.length}`;
-      }
-
-      function choose(i){
-        if (answered) return;
-        answered = true;
-        const q = CURRENT[idx];
-        const btns = Array.from(document.querySelectorAll('.choice'));
-        btns.forEach(b => { b.disabled = true; b.setAttribute('aria-pressed', 'true'); });
-        if (i === q.correct){
-          score += 10;
-          btns[i].classList.add('correct');
-          ariaStatus.textContent = 'Correct!';
-        } else {
-          btns[i].classList.add('wrong');
-          btns[q.correct].classList.add('correct');
-          ariaStatus.textContent = 'Wrong. Highlighted answer is correct.';
-        }
-        scoreEl.textContent = String(score);
-        nextBtn.style.display = 'block';
-        nextBtn.focus({ preventScroll: true });
-      }
-
-      nextBtn.addEventListener('click', () => {
-        if (idx < CURRENT.length - 1){
-          idx++; render();
-        } else {
-          end();
-        }
-      });
-
-      function end(){
-        qText.textContent = `Quiz complete! Final score: ${score}`;
-        choicesEl.innerHTML = '';
-        nextBtn.style.display = 'none';
-        ariaStatus.textContent = 'Quiz complete';
-      }
-
-      // Start button initializes a fresh random set of 10 each time
-      document.getElementById('startBtn').addEventListener('click', () => { initQuiz(); });
-
-      // Pick a random set immediately so reload changes the set before clicking Start
-      window.addEventListener('load', () => {
-        const pool = shuffle([...QUESTIONS_ALL]);
-        CURRENT = pool.slice(0, Math.min(10, pool.length));
-        qTotalEl.textContent = CURRENT.length;
-      });
-
-      // Respect reduced motion and/or user data saver: pause video if either is on
-      try {
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const dataSaver = ('connection' in navigator) && navigator.connection && navigator.connection.saveData;
-        if (prefersReducedMotion.matches || dataSaver) {
-          if (bgVideo) { bgVideo.pause(); bgVideo.currentTime = 0; }
-        }
-      } catch(_) { /* no-op */ }
+      })();
     </script>
   </body>
 </html>
