@@ -183,7 +183,7 @@
     <div id="deviceBlocker" role="dialog" aria-labelledby="blockerTitle" aria-describedby="blockerDesc" aria-modal="true">
       <div class="msg">
         <b id="blockerTitle">Desktop experience only</b>
-        <div id="blockerDesc">Please switch to <em>Desktop Mode</em> to access this website. On mobile, use your browser’s “Request Desktop Site” option, or open this page on a desktop or laptop.</div>
+        <div id="blockerDesc">Please switch to <em>Desktop Mode</em> to access this website. On mobile, use your browser’s “Request Desktop Site” option, or open this page on a desktop or laptop. If you still see this message after enabling Desktop Mode, set page zoom to 100%.</div></div>
       </div>
     </div>
 
@@ -245,23 +245,28 @@
           else { document.addEventListener('DOMContentLoaded', fn); }
         }
 
-        onReady(function(){
-          // ===== Desktop-only gating =====
+        onReady(function(){          // ===== Desktop-only gating =====
           const blocker = document.getElementById('deviceBlocker');
           const bgVideo = document.getElementById('bgVideo');
 
-          function isMobileUA(){
-            return /Mobi|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|webOS/i.test(navigator.userAgent);
+          // Treat as desktop-only based on viewport *only* so that
+          // mobile browsers in "Request Desktop Site" are allowed.
+          // Use the widest available metric (visualViewport when present).
+          function vpWidth(){
+            return Math.max(window.innerWidth || 0, (window.visualViewport && window.visualViewport.width) || 0);
           }
-          function isSmallViewport(){ return window.innerWidth < 1024 || window.innerHeight < 600; }
+          function vpHeight(){
+            return Math.max(window.innerHeight || 0, (window.visualViewport && window.visualViewport.height) || 0);
+          }
+
+          // Conservative desktop threshold: 980x560 (matches many desktop-mode UAs)
+          function isSmallViewport(){ return vpWidth() < 980 || vpHeight() < 560; }
 
           function enforceDesktopOnly(){
-            const blocked = isMobileUA() || isSmallViewport();
+            const blocked = isSmallViewport();
             if (blocked) {
               blocker.style.display = 'flex';
-              // Pause background video to save resources on blocked devices
               try { if (bgVideo && !bgVideo.paused) { bgVideo.pause(); } } catch(_){}
-              // Prevent scrolling behind the dialog
               document.documentElement.style.overflow = 'hidden';
             } else {
               blocker.style.display = 'none';
@@ -272,6 +277,7 @@
 
           window.addEventListener('resize', enforceDesktopOnly);
           window.addEventListener('orientationchange', enforceDesktopOnly);
+          if (window.visualViewport) window.visualViewport.addEventListener('resize', enforceDesktopOnly);
           enforceDesktopOnly();
 
           // ===== Quiz logic (unchanged aside from moved refs) =====
