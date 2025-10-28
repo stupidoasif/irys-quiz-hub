@@ -94,6 +94,7 @@
         object-fit: cover;
         z-index: -1;
         background: #0a0d22 url('Welcome.png') center/cover no-repeat; /* static image fallback */
+        pointer-events: none; /* NEVER intercept taps/clicks */
       }
 
       /* Title (top by default); with .splash it starts centered */
@@ -340,11 +341,17 @@
 
           // Splash -> UI reveal
           function handlePlay(){
+            // guard: only run once
+            if (document.body.classList.contains('ui-shown')) return;
+            document.body.classList.add('ui-shown');
+            try { playBtn.blur(); } catch(_) {}
             playBtn.classList.add('fade');
-            if (irysTitle) irysTitle.classList.remove('splash'); // moves to top smoothly
-            document.body.classList.remove('hidden-ui'); // show UI
-            try {
-              if (bgVideo && bgVideo.paused) { bgVideo.muted = true; bgVideo.play().catch(function(){}); }
+            if (irysTitle) irysTitle.classList.remove('splash');
+            document.body.classList.remove('hidden-ui');
+            // Scroll to content as a visual confirmation
+            try { document.getElementById('game').scrollIntoView({behavior:'smooth', block:'start'}); } catch(_) {}
+            try { if (bgVideo && bgVideo.paused) { bgVideo.muted = true; bgVideo.play().catch(function(){}); } } catch(_) {}
+          }); }
             } catch(_) {}
           }
           function handlePlay(){
@@ -354,7 +361,30 @@
             playBtn.classList.add('fade');
             if (irysTitle) irysTitle.classList.remove('splash');
             document.body.classList.remove('hidden-ui');
-            try { if (bgVideo && bgVideo.paused) { bgVideo.muted = true; bgVideo handlePlay(); }, { passive: false });
+            try { if (bgVideo && bgVideo.paused) { bgVideo.muted = true; bgVideo.play().catch(function(){}); } } catch(_) {}
+          }
+          // Use pointer events to cover all input types
+          // unified inputs
+          ['pointerup','click','touchend','touchstart','mousedown'].forEach(function(type){
+            playBtn.addEventListener(type, function(e){
+              try { e.preventDefault(); } catch(_) {}
+              handlePlay();
+            }, false);
+          });
+          // unified inputs
+          ['pointerup','click','touchend','touchstart','mousedown'].forEach(function(type){
+            playBtn.addEventListener(type, function(e){
+              try { e.preventDefault(); } catch(_) {}
+              handlePlay();
+            }, false);
+          });
+          // unified inputs
+          ['pointerup','click','touchend','touchstart','mousedown'].forEach(function(type){
+            playBtn.addEventListener(type, function(e){
+              try { e.preventDefault(); } catch(_) {}
+              handlePlay();
+            }, false);
+          }); handlePlay(); }, { passive: false });
             if (irysTitle) irysTitle.classList.remove('splash'); // moves to top smoothly
             document.body.classList.remove('hidden-ui'); // show UI
             try {
