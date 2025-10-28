@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -244,10 +245,6 @@
         <div class="panel" role="group" aria-label="Stats and controls">
           <div class="stat">Score: <b id="score">0</b></div>
           <div class="stat">Q: <b id="qNum">0</b>/<b id="qTotal">0</b></div>
-          <div class="stat">Best: <b id="best">0</b></div>
-          <button class="btn" id="startBtn" type="button">Start Quiz</button>
-        </div>
-          <div class="stat">Q: <b id="qNum">0</b>/<b id="qTotal">0</b></div>
           <button class="btn" id="startBtn" type="button">Start Quiz</button>
         </div>
       </header>
@@ -286,7 +283,7 @@
         }
 
         onReady(function(){
-          // === 1) Questions ===
+          // === 1) Questions (unchanged except formatting) ===
           const QUESTIONS_ALL = [
              { q: "What is Irys?", a: [
     "A DeFi protocol",
@@ -890,7 +887,6 @@
   ], correct: 0 }
 ];
 
-
           // === 2) Helper: Fisher–Yates shuffle ===
           function shuffle(arr){
             for(let i=arr.length-1;i>0;i--){
@@ -915,15 +911,6 @@
           const ariaStatus = document.getElementById('ariaStatus');
           const bgVideo = document.getElementById('bgVideo');
           const startBtn = document.getElementById('startBtn');
-          const bestEl = document.getElementById('best');
-
-          // High score persistence
-          let best = 0;
-          try {
-            const saved = localStorage.getItem('bestScore');
-            best = saved ? Number(saved) || 0 : 0;
-          } catch(_) { best = 0; }
-          if (bestEl) bestEl.textContent = String(best);
 
           // Defensive: bail if play button missing
           if (!playBtn) return;
@@ -943,7 +930,6 @@
             CURRENT = pool.slice(0, Math.min(10, pool.length));
             if (qTotalEl) qTotalEl.textContent = String(CURRENT.length);
             idx = 0; score = 0; render();
-            if (startBtn) startBtn.textContent = 'Start Quiz';
           }
 
           function render(){
@@ -1004,15 +990,6 @@
             if (choicesEl) choicesEl.innerHTML = '';
             if (nextBtn) nextBtn.style.display = 'none';
             if (ariaStatus) ariaStatus.textContent = 'Quiz complete';
-            // Update and persist best score
-            try {
-              if (score > best) {
-                best = score;
-                localStorage.setItem('bestScore', String(best));
-                if (bestEl) bestEl.textContent = String(best);
-              }
-            } catch(_) {}
-            if (startBtn) startBtn.textContent = 'Play Again';
           }
 
           // Start button initializes a fresh random set of 10 each time
