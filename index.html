@@ -867,21 +867,17 @@
         });
       })();
     </script>
-    </script>
-
-<!-- 🎵 Background Music -->
 <audio id="bgMusic" loop>
   <source src="bgm.mp3" type="audio/mpeg">
   Your browser does not support the audio element.
 </audio>
-
-<!-- 🎚 Music Toggle Button (top-left corner) -->
 <button id="musicBtn"
   style="position: fixed; top: 20px; left: 20px;
          z-index: 9999; background: var(--accent); color: #0a0d22;
          border: none; border-radius: 8px; padding: 8px 14px;
          font-weight: 700; cursor: pointer;
-         box-shadow: 0 4px 12px rgba(0,0,0,.3);">
+         box-shadow: 0 4px 12px rgba(0,0,0,.3);
+         display: none;"> 
   🔈 Pause Music
 </button>
 
@@ -890,13 +886,12 @@
   const musicBtn = document.getElementById('musicBtn');
   const playBtn = document.getElementById('playBtn');
 
-  // Autoplay policy: start only after user clicks "Play"
   playBtn.addEventListener('click', () => {
     bgMusic.volume = 0.4;
     bgMusic.play().catch(() => {});
+    musicBtn.style.display = 'block'; 
   });
 
-  // Toggle Play/Pause
   musicBtn.addEventListener('click', () => {
     if (bgMusic.paused) {
       bgMusic.play().catch(() => {});
@@ -909,6 +904,7 @@
 </script>
   </body>
 </html>
+
 
 
 
