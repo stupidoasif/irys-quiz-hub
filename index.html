@@ -71,7 +71,7 @@
       /* Background */
       #bgVideo { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; background: #0a0d22 url('Welcome.png') center/cover no-repeat; }
 
-      /* Title + Play (hidden until load) */
+      /* Title + Play */
       .irys-title { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); transition: top .6s ease, transform .6s ease, opacity .4s ease; font-family: 'HouseSans', sans-serif; font-weight: 900; font-style: italic; font-size: clamp(28px, 7vw, 64px); color: var(--accent); letter-spacing: 3px; z-index: 10; text-align: center; }
       .irys-title.splash { top: 50%; transform: translate(-50%, -50%); }
       .hidden-title { opacity: 0; pointer-events: none; filter: blur(2px); }
@@ -145,7 +145,7 @@
       Your browser does not support the video tag.
     </video>
 
-    <!-- Title & Play hidden until load -->
+    <!-- Title & Play -->
     <div id="irysTitle" class="irys-title splash hidden-title" role="heading" aria-level="1">IRYS QUIZ HUB</div>
     <button id="playBtn" type="button" class="hidden-title" aria-label="Play the quiz">Play</button>
 
@@ -171,7 +171,7 @@
       </main>
     </div>
 
-    <!-- Footer hidden until Play by body.hidden-ui -->
+    <!-- Footer hidden until Play -->
     <footer class="site-footer">
       <div class="footer-left" style="position: fixed; bottom: 15px; left: 20px; font-size: 18px; text-align: left;">
         <a href="https://irys.xyz/" target="_blank" rel="noopener noreferrer" style="font-size: 18px; font-weight: 600; text-decoration: none;">Learn more about Irys…</a>
@@ -220,7 +220,7 @@
           if (window.visualViewport) window.visualViewport.addEventListener('resize', enforceDesktopOnly);
           enforceDesktopOnly();
 
-          // ===== Title/Play: hide until window fully loaded =====
+          // ===== Title/Play: =====
           const playBtn = document.getElementById('playBtn');
           const irysTitle = document.getElementById('irysTitle');
           window.addEventListener('load', function(){
@@ -883,4 +883,5 @@
     </script>
   </body>
 </html>
+
 
